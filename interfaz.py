@@ -221,6 +221,7 @@ filaAux = Frame(root,bg="#e3debc",height=100)
 filaAux.pack_propagate(False)
 filaAux.pack(side=BOTTOM,fill=X)
 
+# DESCRIPCIONES 
 descripEx = Label(filaAux,text="EXONERADO",bg="GREEN",font=("Verdana",15))
 descripEx.pack(side=LEFT,padx=10)
 
@@ -230,6 +231,7 @@ descripApr.pack(side=LEFT,padx=10)
 descripRep = Label(filaAux,text="REPROBADO",bg="red",font=("Verdana",15))
 descripRep.pack(side=LEFT,padx=10)
 
+#BOTON REINICIO
 botonR = Button(filaAux,text="REINICIAR",bg="#cdcbd6",width=10,height=1,font=("Arial",12))
 botonR.pack(side="right",padx=15)
 def restablecer(botones):
