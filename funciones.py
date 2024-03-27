@@ -27,8 +27,8 @@ def cambiar(event,botones):
     nombre = event.widget["text"]
     cursor.execute('SELECT * FROM EstadoMaterias WHERE materia = ?', (nombre,))
     resultado = cursor.fetchone()
-    cursor.execute('SELECT creditosT FROM CreditosTotales')
-    creditos_actuales = cursor.fetchone()[0]
+    #cursor.execute('SELECT creditosT FROM CreditosTotales')
+    #creditos_actuales = cursor.fetchone()[0]
     if resultado:
         materia,estado,credito = resultado
         if nombre == materia:
@@ -39,13 +39,13 @@ def cambiar(event,botones):
             if estado == 'a' and verificar_cumplimiento_previas(nombre):
                 event.widget.config(bg="green",fg="white")
                 cursor.execute('UPDATE EstadoMaterias SET estado = ? WHERE materia = ?', ('e', nombre))
-                cursor.execute('UPDATE CreditosTotales SET creditosT = ?',(creditos_actuales + credito,))
+                cursor.execute('UPDATE CreditosTotales SET creditosT = creditosT + ?',(credito,))
                 conn.commit()
             if estado == 'e':
                 event.widget.config(bg="#de1b1b",fg="white")
                 volver_rojo(nombre,botones)
+                cursor.execute('UPDATE CreditosTotales SET creditosT = creditosT - ?',(credito,))
                 cursor.execute('UPDATE EstadoMaterias SET estado = ? WHERE materia = ?', ('r', nombre))
-                cursor.execute('UPDATE CreditosTotales SET creditosT = ?',(creditos_actuales - credito,))
                 conn.commit()
     conn.close()
 
@@ -53,9 +53,10 @@ def cambiar(event,botones):
 
 
 def verificar_aprobado(curso,cursor):
+    # FUNCION QUE VERIFICA SI ESTA APROBADO/EXONERADO EL CURSO Y RETORNA EL ESTADO EN EL QUE ESTA
     cursor.execute('SELECT estado from EstadoMaterias where materia = ?',(curso,))
-    test = cursor.fetchone()
-    return test[0]
+    estado = cursor.fetchone()
+    return estado[0]
 
 
 def verificar_cumplimiento_previas(curso):
@@ -70,7 +71,6 @@ def verificar_cumplimiento_previas(curso):
         estadoMateria = verificar_aprobado(nombre,cursor)
         if not estadoMateria in estado_previa:
             faltaAprobar.append(nombre)
-            #print(f"No aprobado: {nombre,estadin}")
             centinela = False
     conn.close()
     if len(faltaAprobar) > 0:
@@ -86,16 +86,16 @@ def volver_rojo(curso,botones):
     if materias_resultado:
         for materia in materias_resultado:
             hacerRojo,previa = materia
-            if materia[1] == curso:
-                if hacerRojo in botones:
+            if previa == curso: # si la previa que tiene la materia es igual al curso dado por parametro
+                cursor.execute('SELECT estado,creditos from EstadoMaterias where materia = ?',(hacerRojo,))
+                estado,creditos, = cursor.fetchone() # estado de la materia hacerRojo, creditos de la materia hacerRojo
+                if hacerRojo in botones and estado in ["a","e"]:
                     boton = botones[hacerRojo]
                     boton.config(bg="#de1b1b")
                     cursor.execute('UPDATE EstadoMaterias SET estado = ? WHERE materia = ?', ('r', hacerRojo))
+                    cursor.execute('UPDATE CreditosTotales SET creditosT = creditosT - ?', (creditos,))
                     conn.commit()
     conn.close()
-
-
-
 
 def restablecerBD(botones):
     conn = sqlite3.connect('base_de_datos.db')
